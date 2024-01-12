@@ -6,8 +6,10 @@ PregoApartments::PregoApartments(){
 }
 
 void Hall_1a::setup() {
-
-	Pencil->ClearScreen(1);
+	//Pencil.SetPalette(palette);
+	//Pencil->SetColor(1, Color{ 255,0,255 });
+	//Pencil->ClearScreen(1);
+	
 	//Entity* entity = new Entity(Sprite, x,y, colour)
 	wallup = new Tile{ {
 		1,1,1,1,1,1,1,1,

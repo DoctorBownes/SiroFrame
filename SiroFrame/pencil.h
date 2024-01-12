@@ -3,16 +3,6 @@
 
 #include <SiroFrame/sprite.h>
 
-struct Color {
-	unsigned char r;
-	unsigned char g;
-	unsigned char b;
-};
-
-struct Palette {
-	Color colors[16];
-};
-
 class SiroRenderer;
 
 class SiroPencil {
@@ -146,12 +136,17 @@ public:
 	 */
 	void RemoveSprite(Sprite* sprite, unsigned char x_pos, unsigned char y_pos);
 
+	Palette* GetPalette() { return _palette; };
+	void SetPalette(Palette* palette);
+	void SetColor(unsigned char pos, Color color);
 
 private:
 
 	SiroPencil();
 
 	static SiroPencil* _instance;
+
+	Palette* _palette;
 
 	SiroRenderer* _renderer;
 };

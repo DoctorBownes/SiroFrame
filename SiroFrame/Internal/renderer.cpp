@@ -1,25 +1,7 @@
 #include <SiroFrame/Internal/renderer.h>
-#include <SiroFrame/pencil.h>
+#include <SiroFrame/sprite.h>
 #include <glad/glad.h>
 #include <stdio.h>
-
-#define RGB_OFF 0,0,0
-#define RGB_BLK 0,0,0
-#define RGB_DBLU 29, 43, 83
-#define RGB_DPUR 126, 37, 83
-#define RGB_DGRN 0, 135, 81
-#define RGB_BRN 171, 82, 54
-#define RGB_DGRY 95, 87, 79
-#define RGB_LGRY 194, 195, 199
-#define RGB_WHT 255, 241, 232
-#define RGB_RED 255, 0, 77
-#define RGB_ORN 255, 163, 0
-#define RGB_YLW 255, 236, 39
-#define RGB_GRN 0, 228, 54
-#define RGB_BLU 41, 173, 255
-#define RGB_LAV 131, 118, 156
-#define RGB_PNK 255, 119, 168
-#define RGB_PCH 255, 204, 170
 
 const char* vertex_shader =
 "#version 330 core\n"
@@ -141,10 +123,6 @@ void SiroRenderer::SetupRenderer() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, WIN_WIDTH, WIN_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, pixelbuffer);
     glUniform1i(glGetUniformLocation(shaderProgram, "TextureSampler"), 0);
 
-    unsigned char palette[64] = {
-        RGB_BLK, RGB_DBLU,RGB_DPUR,RGB_DGRN,RGB_BRN,RGB_DGRY,RGB_LGRY,RGB_WHT,RGB_RED,RGB_ORN,RGB_YLW,RGB_GRN,RGB_BLU,RGB_LAV,RGB_PNK,RGB_PCH 
-    };
-
     glActiveTexture(GL_TEXTURE1);
     glGenTextures(1, &PaletteSampler);
     glBindTexture(GL_TEXTURE_1D, PaletteSampler);
@@ -152,10 +130,16 @@ void SiroRenderer::SetupRenderer() {
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 16, 0, GL_RGB, GL_UNSIGNED_BYTE, palette);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 16, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glUniform1i(glGetUniformLocation(shaderProgram, "PaletteSampler"), 1);
 
     glActiveTexture(GL_TEXTURE0);
+}
+
+void SiroRenderer::UpdatePalette(Palette* _palette) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_1D, PaletteSampler);
+    glTexSubImage1D(GL_TEXTURE_1D, 0, 0, 16, GL_RGB, GL_UNSIGNED_BYTE, _palette);
 }
 
 void SiroRenderer::UpdateGameScreen(void) {

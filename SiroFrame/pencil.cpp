@@ -7,6 +7,14 @@ extern int _framecounter;
 
 SiroPencil::SiroPencil() {
 	_renderer = _renderer->GetRenderer();
+
+	Palette* pico_palette = new Palette{
+		RGB_BLK, RGB_DBLU,RGB_DPUR,RGB_DGRN,RGB_BRN,RGB_DGRY,RGB_LGRY,RGB_WHT,RGB_RED,RGB_ORN,RGB_YLW,RGB_GRN,RGB_BLU,RGB_LAV,RGB_PNK,RGB_PCH
+	};
+
+	SetPalette(pico_palette);
+
+	delete pico_palette;
 }
 
 void SiroPencil::DrawSprite(Sprite* sprite, unsigned char xpos, unsigned char ypos, unsigned char dir) {
@@ -90,6 +98,18 @@ void SiroPencil::RemoveSprite(Sprite* sprite, unsigned char xpos, unsigned char 
 			_renderer->pixelbuffer[y + ypos & 255][x + xpos & 255] = 0;
 		}
 	}
+}
+
+void SiroPencil::SetPalette(Palette* palette) {
+	_palette = palette;
+	_renderer->UpdatePalette(_palette);
+}
+
+void SiroPencil::SetColor(unsigned char pos, Color color){
+	_palette->colors[pos & 15].r = color.r;
+	_palette->colors[pos & 15].g = color.g;
+	_palette->colors[pos & 15].b = color.b;
+	_renderer->UpdatePalette(_palette);
 }
 
 void SiroPencil::ClearScreen(unsigned char colour) {

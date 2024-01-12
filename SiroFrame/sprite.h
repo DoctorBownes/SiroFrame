@@ -41,4 +41,14 @@ struct Tile {
 	unsigned char canvas[8 * 8];
 };
 
+struct Color {
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
+};
+
+struct Palette {
+	Color colors[16];
+};
+
 #endif
