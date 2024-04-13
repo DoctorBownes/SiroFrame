@@ -43,7 +43,8 @@ public:
 
 	void DrawGameScreen(void);
 
-	unsigned char pixelbuffer[WIN_WIDTH][WIN_WIDTH];
+	unsigned char spritebuffer[WIN_WIDTH][WIN_WIDTH];
+	unsigned char tilebuffer[WIN_WIDTH][WIN_WIDTH];
 
 	friend class SiroCore;
 
@@ -52,9 +53,12 @@ private:
 
 	static SiroRenderer* _instance;
 
+	unsigned char rgba_palettebuffer[64];
+
 	GLuint shaderProgram;
 	GLuint vertexbuffer;
-	GLuint TextureSampler;
+	GLuint BGTextureSampler;
+	GLuint FGTextureSampler;
 	GLuint PaletteSampler;
 	GLuint EBO;
 

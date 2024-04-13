@@ -58,6 +58,7 @@ int SiroCore::ShutdownConsole() {
 
 void SiroCore::RunGame(Game* game) {
     if (glfwGetTime() - _starttime > 0.0162f) {//60 FPS CAP
+        glClearColor(_renderer->rgba_palettebuffer[0] * 0.00392f, _renderer->rgba_palettebuffer[1] * 0.00392f, _renderer->rgba_palettebuffer[2] * 0.00392f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
        _framecounter++;
@@ -87,7 +88,8 @@ void SiroCore::RunGame(Game* game) {
 
 void SiroCore::RunGame(void(*setup)(), void(*loop)()) {
     if (glfwGetTime() - _starttime > 0.0162f) {//60 FPS CAP
-       glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(_renderer->rgba_palettebuffer[0] * 0.00392f, _renderer->rgba_palettebuffer[1] * 0.00392f, _renderer->rgba_palettebuffer[2] * 0.00392f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
         _framecounter++;
 
         _input->_presscalled = 0;

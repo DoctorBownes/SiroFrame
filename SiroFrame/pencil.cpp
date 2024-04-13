@@ -59,7 +59,7 @@ void SiroPencil::DrawSprite(Sprite* sprite, unsigned char xpos, unsigned char yp
 void SiroPencil::RemoveTile(unsigned char x, unsigned char y) {
 	for (unsigned char ypos = 0; ypos < 8; ypos++) {
 		for (unsigned char xpos = 0; xpos < 8; xpos++) {
-			_renderer->pixelbuffer[(y * 8) + ypos][(x * 8) + xpos] = 0;
+			_renderer->tilebuffer[(y * 8) + ypos][(x * 8) + xpos] = 0;
 		}
 	}
 }
@@ -68,7 +68,7 @@ void SiroPencil::DrawTile(Tile* tile, unsigned char x, unsigned char y) {
 	unsigned char row = 0;
 	for (unsigned char ypos = 0; ypos < 8; ypos++) {
 		for (unsigned char xpos = 0; xpos < 8; xpos++) {
-			_renderer->pixelbuffer[(y * 8) + ypos][(x * 8) + xpos] = tile->canvas[row] & 15;
+			_renderer->tilebuffer[(y * 8) + ypos][(x * 8) + xpos] = tile->canvas[row] & 15;
 			row++;
 		}
 	}
@@ -95,7 +95,7 @@ void SiroPencil::DrawTileNumber(Tile* SizeTenArray[10], unsigned char x, unsigne
 void SiroPencil::RemoveSprite(Sprite* sprite, unsigned char xpos, unsigned char ypos) {
 	for (unsigned char y = 0; y < sprite->height; y++) {
 		for (unsigned char x = 0; x < sprite->width; x++) {
-			_renderer->pixelbuffer[y + ypos & 255][x + xpos & 255] = 0;
+			_renderer->spritebuffer[y + ypos & 255][x + xpos & 255] = 0;
 		}
 	}
 }
@@ -115,15 +115,16 @@ void SiroPencil::SetColor(unsigned char pos, Color color){
 void SiroPencil::ClearScreen(unsigned char colour) {
 	for (int y = 0; y < WIN_HEIGHT; y++) {
 		for (int x = 0; x < WIN_WIDTH; x++) {
-			_renderer->pixelbuffer[y][x] = colour;
+			_renderer->spritebuffer[y][x] = colour;
+			_renderer->tilebuffer[y][x] = colour;
 		}
 	}
 }
 
 void SiroPencil::DrawPixel(unsigned char xpos, unsigned char ypos, unsigned char colour) {
-	if (colour) {
-		_renderer->pixelbuffer[ypos][xpos] = (colour-1) & 15;
-	}
+	//if (colour) {
+		_renderer->spritebuffer[ypos][xpos] = colour & 15;
+	//}
 }
 
 bool SiroPencil::DrawAnimatedSprite(AnimatedSprite* animation, unsigned char x_pos, unsigned char y_pos, unsigned char colour) {

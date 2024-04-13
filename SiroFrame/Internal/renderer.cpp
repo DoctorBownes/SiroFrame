@@ -17,13 +17,16 @@ const char* fragment_shader =
 "#version 330 core\n"
 "in vec2 UV;\n"
 "out vec4 FragColor;\n"
-"uniform sampler2D TextureSampler;\n"
+"uniform sampler2D BGTextureSampler;\n"
+"uniform sampler2D FGTextureSampler;\n"
 "uniform sampler1D PaletteSampler;\n"
 "void main()\n"
 "{\n"
-"   float index = texture2D(TextureSampler, UV).r;\n"
-"   vec4 texel = texelFetch(PaletteSampler, int(index * 255), 0);\n"
-"	FragColor = texel;\n"
+"   float index1 = texture(BGTextureSampler, UV).r;\n"
+"   float index2 = texture(FGTextureSampler, UV).r;\n"
+"   vec4 texel1 = texelFetch(PaletteSampler, int(index1 * 255), 0);\n"
+"   vec4 texel2 = texelFetch(PaletteSampler, int(index2 * 255), 0);\n"
+"	FragColor = mix(texel1,texel2,texel2.a);\n"
 "};\0";
 
 SiroRenderer* SiroRenderer::_instance = 0;
@@ -31,15 +34,35 @@ SiroRenderer* SiroRenderer::_instance = 0;
 SiroRenderer::SiroRenderer() {
     shaderProgram = 0;
 	vertexbuffer = 0;
-	TextureSampler = 0;
+	BGTextureSampler = 0;
+	FGTextureSampler = 0;
 	PaletteSampler = 0;
 	EBO = 0;
 
     for (int i = 0; i < WIN_WIDTH; i++) {
         for (int j = 0; j < WIN_HEIGHT; j++) {
-            pixelbuffer[j][i] = 0;
+            spritebuffer[j][i] = 0;
+            tilebuffer[j][i] = 0;
         }
     }
+
+    unsigned char y = 0;
+    unsigned char l = 0;
+    while (y < 16) {
+        rgba_palettebuffer[l] = 0;
+        l++;
+        rgba_palettebuffer[l] = 0;
+        l++;
+        rgba_palettebuffer[l] = 0;
+        l++;
+        rgba_palettebuffer[l] = 255;
+        l++;
+        y++;
+    }
+    rgba_palettebuffer[0] = 0;
+    rgba_palettebuffer[1] = 0;
+    rgba_palettebuffer[2] = 0;
+    rgba_palettebuffer[3] = 0;
 }
 
 void SiroRenderer::SetupRenderer() {
@@ -47,7 +70,6 @@ void SiroRenderer::SetupRenderer() {
     GLuint VertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(VertexShader, 1, &vertex_shader, nullptr);
     glCompileShader(VertexShader);
-
     // Check Vertex Shader
     //glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &Result);
     //glGetShaderiv(VertexShader, GL_INFO_LOG_LENGTH, &InfoLogLength);
@@ -116,36 +138,59 @@ void SiroRenderer::SetupRenderer() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glActiveTexture(GL_TEXTURE0);
-    glGenTextures(0, &TextureSampler);
-    glBindTexture(GL_TEXTURE_2D, TextureSampler);
+    glGenTextures(1, &BGTextureSampler);
+    glBindTexture(GL_TEXTURE_2D, BGTextureSampler);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, WIN_WIDTH, WIN_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, pixelbuffer);
-    glUniform1i(glGetUniformLocation(shaderProgram, "TextureSampler"), 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, WIN_WIDTH, WIN_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, tilebuffer);
+    glUniform1i(glGetUniformLocation(shaderProgram, "BGTextureSampler"), 0);
 
     glActiveTexture(GL_TEXTURE1);
+    glGenTextures(1, &FGTextureSampler);
+    glBindTexture(GL_TEXTURE_2D, FGTextureSampler);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, WIN_WIDTH, WIN_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, spritebuffer);
+    glUniform1i(glGetUniformLocation(shaderProgram, "FGTextureSampler"), 1);
+
+    glActiveTexture(GL_TEXTURE2);
     glGenTextures(1, &PaletteSampler);
     glBindTexture(GL_TEXTURE_1D, PaletteSampler);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 16, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glUniform1i(glGetUniformLocation(shaderProgram, "PaletteSampler"), 1);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba_palettebuffer);
+    glUniform1i(glGetUniformLocation(shaderProgram, "PaletteSampler"), 2);
 
     glActiveTexture(GL_TEXTURE0);
 }
 
 void SiroRenderer::UpdatePalette(Palette* _palette) {
-    glActiveTexture(GL_TEXTURE1);
+    unsigned char y = 0;
+    unsigned char l = 0;
+    while (y < 16) {
+        rgba_palettebuffer[l] = _palette->colors[y].r;
+        l++;
+        rgba_palettebuffer[l] = _palette->colors[y].g;
+        l++;
+        rgba_palettebuffer[l] = _palette->colors[y].b;
+        l+=2;
+        y++;
+    }
+    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_1D, PaletteSampler);
-    glTexSubImage1D(GL_TEXTURE_1D, 0, 0, 16, GL_RGB, GL_UNSIGNED_BYTE, _palette);
+    glTexSubImage1D(GL_TEXTURE_1D, 0, 0, 16, GL_RGBA, GL_UNSIGNED_BYTE, rgba_palettebuffer);
 }
 
 void SiroRenderer::UpdateGameScreen(void) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, TextureSampler);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_RED, GL_UNSIGNED_BYTE, pixelbuffer);
+    glBindTexture(GL_TEXTURE_2D, BGTextureSampler);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_RED, GL_UNSIGNED_BYTE, tilebuffer);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, FGTextureSampler);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, WIN_WIDTH, WIN_HEIGHT, GL_RED, GL_UNSIGNED_BYTE, spritebuffer);
 }
 
 void SiroRenderer::DrawGameScreen(void) {
